@@ -1,0 +1,66 @@
+#include <msp430G2553.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+
+#define INT_MAX  2147483647
+
+volatile float temp_max, temp_min,temp_atual; //global variables
+
+
+void setup_buzzer(){
+
+    P2DIR |= BIT2;// set P2.2 as output
+    P2OUT &= ~BIT2;// set P2.2 output as low
+    P2REN &= ~BIT2; // disable pullup and pulldown
+}
+
+void buzzer_checkup(){
+    if(temp_atual> temp_max){
+        P2OUT |= BIT2;// set P2.2 output as hight
+    }
+    if(temp_atual> temp_max){
+        P2OUT &= ~BIT2;// set P2.2 output as hight
+    }
+}
+
+
+void testbenchl(){
+    temp_max = 50;//teste 50 graus
+    temp_min = 20;// teste 20 graus
+    temp_atual = 0;//test bench tempo 0 graus
+}
+
+void delay(){//testbench esperar tempo
+    int i,f,c;
+    for(i=INT_MAX;i>1;--i){
+        for(f=INT_MAX;f>1;--f){
+            for(c=INT_MAX;c>1;--c);
+        }
+    }
+
+}
+
+
+int main(void)
+{
+	WDTCTL = WDTPW | WDTHOLD;	// stop watchdog timer
+	setup_buzzer();
+
+	while(1){
+	    buzzer_checkup();
+	    delay();
+	    temp_atual = 40;
+	    buzzer_checkup();
+	    delay();
+	    temp_atual = 60;
+	    buzzer_checkup();
+	    delay();
+	    temp_atual = 80;
+	}
+
+
+
+
+	return 0;
+}

@@ -20,9 +20,9 @@ void testbenchl(){
 
 void delay(){//testbench esperar tempo
     int i,f,c;
-    for(i=INT_MAX;i>1;--i){
-        for(f=INT_MAX;f>1;--f){
-            for(c=INT_MAX;c>1;--c);
+    for(i=214748;i>1;--i){
+        for(f=214748;f>1;--f){
+            for(c=214748;c>1;--c);
         }
     }
 
@@ -41,28 +41,26 @@ void setup_PWM(){
 
     TA1CCR0 = 1000; //Set the period in the Timer A0 Capture/Compare 0 register to 1000 us.
     TA1CCTL1 = OUTMOD_7;//modo PWM
-    TA1CCR1 = 700; //The period in microseconds that the power is ON. It's half the time, which translates to a 50%
-    TA1CTL = TASSEL_1 + MC_1;
+    TA1CCR1 = 900; //The period in microseconds that the power is ON. It's half the time, which translates to a 50%
+    TA1CTL = TASSEL_1 + MC_0;
 
 }
 
 void check_motor(){
     if(temp_atual>temp_min){
         if(temp_atual>temp_max){
-            TA1CTL = MC_1;
-            TACCR1 = 1000;// PWM no maximo
+            TA1CTL = TASSEL_1 + MC_1;
+            TA1CCR1 = 1000;// PWM no maximo
         }
         else{
-            TA1CTL = MC_1;
-            TACCR1 = (int)(((temp_atual-temp_min)*(1000))/(temp_max-temp_min));// % * max value para PWM, convertido para integer
+            TA1CTL = TASSEL_1 + MC_1;
+            TA1CCR1 = (int)(((temp_atual-temp_min)*(1000))/(temp_max-temp_min));// % * max value para PWM, convertido para integer
         }
 
     }
     else {
-        TA1CTL = MC_0;
-        TA1R = 0; // valor do timer = 0
-
-
+        TA1CTL = TASSEL_1 + MC_1;
+        TA1CCR1 = 0;// % *
     }
 
 }
@@ -74,25 +72,28 @@ int main(void)
     setup_PWM();
     testbenchl();
 
-    temp_atual = 50;
-    check_motor();
-
 
     while(1){
-    //    check_motor();
-      //  delay();
-       // temp_atual = 50;
-       // check_motor();
-        //delay();
-        //temp_atual = 80;
-        //check_motor();
-        //delay();
-        //temp_atual = 130;
-        //check_motor();
-        //delay();
-        //temp_atual = 160;
-
+       check_motor();
+       delay();
+       temp_atual = 50;
+       check_motor();
+       delay();
+       temp_atual = 80;
+       check_motor();
+       delay();
+       temp_atual = 130;
+       check_motor();
+       delay();
+       temp_atual = 160;
+       check_motor();
+       delay();
+       temp_atual = 30;
+       check_motor();
+       delay();
+       temp_atual = 30;
     }
     return 0;
 }
+//funciona
 

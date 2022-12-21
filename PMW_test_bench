@@ -39,50 +39,27 @@ void setup_PWM(){
     P2DIR |= BIT1;// set P2.1 as output
     P2SEL |= BIT1 ;// set P2.1 como saida do PWM
 
+    TA1CCR0 = 1000; //Set the period in the Timer A0 Capture/Compare 0 register to 1000 us.
+    TA1CCTL1 = OUTMOD_7;//modo PWM
+    TA1CCR1 = 700; //The period in microseconds that the power is ON. It's half the time, which translates to a 50%
+    TA1CTL = TASSEL_1 + MC_1;
 
-    TA1CTL |= BIT2;//RESET de TACTL
-
-    // escolha de clock auxiliar para PWM 32 khz
-    TA1CTL &= ~BIT9;
-    TA1CTL |= BIT8;
-
-    // divisor 0
-    TA1CTL &= ~BIT7;
-    TA1CTL &= ~BIT6;
-
-    //stop mode, conta ate ao registo CCP0 e depois reseta
-    TA1CTL &= ~BIT5;
-    TA1CTL &= ~BIT4;
-
-
-    TA1CTL &= BIT1;// timer A interrupt disable
-    TA1CTL &= ~BIT0;// limpar a flag do interrupt
-
-    TA1R = 0; // valor do timer = 0
-
-    TACCTL1 = OUTMOD_7;  //modo pwm  RSET/SET
-
-    TACCR0 = 1000;//valor de contagem maximo
-    TACCR1 = 0;//valor que controla o pwm
 }
 
 void check_motor(){
     if(temp_atual>temp_min){
         if(temp_atual>temp_max){
-            TA1CTL &= ~BIT5;//up mode
-            TA1CTL |= BIT4;
+            TA1CTL = MC_1;
             TACCR1 = 1000;// PWM no maximo
         }
         else{
-            TA1CTL &= ~BIT5;//up mode
-            TA1CTL |= BIT4;
+            TA1CTL = MC_1;
             TACCR1 = (int)(((temp_atual-temp_min)*(1000))/(temp_max-temp_min));// % * max value para PWM, convertido para integer
         }
 
     }
     else {
-        TA1CTL &= ~BIT5;//timer stop
-        TA1CTL &= ~BIT4;//timer stop
+        TA1CTL = MC_0;
         TA1R = 0; // valor do timer = 0
 
 
@@ -93,23 +70,29 @@ void check_motor(){
 int main(void)
 {
 
-	WDTCTL = WDTPW | WDTHOLD;	// stop watchdog timer
-	setup_PWM();
+    WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
+    setup_PWM();
+    testbenchl();
 
-	while(1){
-	    check_motor();
-	    delay();
-	    temp_atual = 50;
-	    check_motor();
-	    delay();
-	    temp_atual = 80;
-	    check_motor();
-	    delay();
-	    temp_atual = 130;
-	    check_motor();
-	    delay();
-	    temp_atual = 160;
+    temp_atual = 50;
+    check_motor();
 
-	}
-	return 0;
+
+    while(1){
+    //    check_motor();
+      //  delay();
+       // temp_atual = 50;
+       // check_motor();
+        //delay();
+        //temp_atual = 80;
+        //check_motor();
+        //delay();
+        //temp_atual = 130;
+        //check_motor();
+        //delay();
+        //temp_atual = 160;
+
+    }
+    return 0;
 }
+

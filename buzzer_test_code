@@ -19,7 +19,7 @@ void buzzer_checkup(){
     if(temp_atual> temp_max){
         P2OUT |= BIT2;// set P2.2 output as hight
     }
-    if(temp_atual> temp_max){
+    if(temp_atual<temp_max){
         P2OUT &= ~BIT2;// set P2.2 output as hight
     }
 }

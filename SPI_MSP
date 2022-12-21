@@ -1,0 +1,48 @@
+#include <msp430G2553.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+volatile char received_ch = 0;
+void SPI_setup(){
+    P1OUT |= BIT3;//P1.3 como slave seleck
+    P1DIR |= BIT3;
+    P1SEL = BIT1 | BIT2 | BIT4;//P1.1 como SOMI P1.2 SIMO, P1.4 como clock
+    P1SEL2 = BIT1 | BIT2 | BIT4;
+
+    UCA0CTL1 |= BIT0;
+    UCA0CTL0 |=  UCMSB + UCMST + UCSYNC; // 3-pin, 8-bit SPI master
+    UCA0CTL1 |= UCSSEL_2; // SMCLK
+    UCA0BR0 |= 0x02; // /2
+    UCA0BR1 = 0; //
+    UCA0MCTL = 0; // No modulation
+    UCA0CTL1 &= ~BIT0; // **Initialize USCI state machine**
+}
+//UCCKPH +
+
+
+
+
+int main(void)
+{
+WDTCTL = WDTPW + WDTHOLD; // Stop WDT
+SPI_setup();
+
+
+
+while(1){
+    P1OUT &= (~BIT3); // Select Device
+    while (!(IFG2 & UCA0TXIFG)); // USCI_A0 TX buffer ready?
+    UCA0TXBUF = 0xBB; // Send 0xAA over SPI to Slave
+    while (!(IFG2 & UCA0RXIFG)); // USCI_A0 RX Received?
+    received_ch = UCA0RXBUF; // Store received data
+    P1OUT |= (BIT3); // Unselect Device
+    __delay_cycles(10);
+
+
+
+
+}
+
+
+}
+

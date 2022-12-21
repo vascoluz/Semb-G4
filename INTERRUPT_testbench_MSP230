@@ -1,0 +1,31 @@
+#include <msp430G2553.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+void setput_interrupt(){
+    P2DIR &= ~BIT0;// como input P2.0
+    P2IE  |=  BIT0;// interrupt em P2.0
+    P2IES &= ~BIT0;//rising edge interrupt
+    P2IFG &= ~BIT0;//LIMPA FLAG DE INTERRUPÇÃO DO PINO P2.0
+
+}
+
+int main(void)
+{
+	WDTCTL = WDTPW | WDTHOLD;	// stop watchdog timer
+	__enable_interrupt(); //possibilita ints
+
+
+	while(1){
+
+	}
+	
+	return 0;
+}
+
+#pragma vector = PORT2_VECTOR
+__interrupt void port_int(void){
+
+    P2IFG &= ~BIT0;//LIMPA FLAG DE INTERRUPÇÃO DO PINO P2.0
+}
+

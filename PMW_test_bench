@@ -4,96 +4,91 @@
 
 
 
-#define INT_MAX  2147483647
+#define trashbyte 0xAA
+#define READ_ADDRESS 0x03
+#define WRITE_ADDRESS 0x02
+#define TXB0CTRL_ADDRESS 0x0F
+#define TXB0CTRLADDRESS 0x10
 
-volatile float temp_max, temp_min,temp_atual; //global variables
 
 
 
 
 
-void testbenchl(){
-    temp_max = 140;//teste 50 graus
-    temp_min = 40;// teste 20 graus
-    temp_atual = 0;//test bench tempo 0 graus
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+volatile char received_ch = 0;
+void SPI_setup(){
+    P1OUT |= BIT3;//P1.3 como slave seleck
+    P1DIR |= BIT3;
+    P1SEL = BIT1 | BIT2 | BIT4;//P1.1 como SOMI P1.2 SIMO, P1.4 como clock
+    P1SEL2 = BIT1 | BIT2 | BIT4;
+
+    UCA0CTL1 |= BIT0;
+    UCA0CTL0 |= UCCKPH + UCMSB + UCMST + UCSYNC; // 3-pin, 8-bit SPI master
+    UCA0CTL1 |= UCSSEL_2; // SMCLK
+    UCA0BR0 |= 0x02; // /2
+    UCA0BR1 = 0; //
+    UCA0MCTL = 0; // No modulation
+    UCA0CTL1 &= ~BIT0; // **Initialize USCI state machine**
 }
-
-void delay(){//testbench esperar tempo
-    int i,f,c;
-    for(i=214748;i>1;--i){
-        for(f=214748;f>1;--f){
-            for(c=214748;c>1;--c);
-        }
-    }
-
-}
+//UCCKPH +
 
 
 
-
-
-
-void setup_PWM(){
-
-
-    P2DIR |= BIT1;// set P2.1 as output
-    P2SEL |= BIT1 ;// set P2.1 como saida do PWM
-
-    TA1CCR0 = 1000; //Set the period in the Timer A0 Capture/Compare 0 register to 1000 us.
-    TA1CCTL1 = OUTMOD_7;//modo PWM
-    TA1CCR1 = 900; //The period in microseconds that the power is ON. It's half the time, which translates to a 50%
-    TA1CTL = TASSEL_1 + MC_0;
-
-}
-
-void check_motor(){
-    if(temp_atual>temp_min){
-        if(temp_atual>temp_max){
-            TA1CTL = TASSEL_1 + MC_1;
-            TA1CCR1 = 1000;// PWM no maximo
-        }
-        else{
-            TA1CTL = TASSEL_1 + MC_1;
-            TA1CCR1 = (int)(((temp_atual-temp_min)*(1000))/(temp_max-temp_min));// % * max value para PWM, convertido para integer
-        }
-
-    }
-    else {
-        TA1CTL = TASSEL_1 + MC_1;
-        TA1CCR1 = 0;// % *
-    }
-
-}
 
 int main(void)
 {
-
-    WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
-    setup_PWM();
-    testbenchl();
+WDTCTL = WDTPW + WDTHOLD; // Stop WDT
+SPI_setup();
 
 
-    while(1){
-       check_motor();
-       delay();
-       temp_atual = 50;
-       check_motor();
-       delay();
-       temp_atual = 80;
-       check_motor();
-       delay();
-       temp_atual = 130;
-       check_motor();
-       delay();
-       temp_atual = 160;
-       check_motor();
-       delay();
-       temp_atual = 30;
-       check_motor();
-       delay();
-       temp_atual = 30;
-    }
-    return 0;
+
+while(1){
+    P1OUT &= (~BIT3); // Select Device
+    while (!(IFG2 & UCA0TXIFG)); // USCI_A0 TX buffer ready?
+    UCA0TXBUF = WRITE_ADDRESS; // Send 0xAA over SPI to Slave
+    //while (!(IFG2 & UCA0RXIFG)); // USCI_A0 RX Received?
+    //received_ch = UCA0RXBUF; // Store received data
+    while (!(IFG2 & UCA0TXIFG)); // USCI_A0 TX buffer ready?
+    UCA0TXBUF = TXB0CTRL_ADDRESS; // Send 0xAA over SPI to Slave
+    while (!(IFG2 & UCA0TXIFG)); // USCI_A0 TX buffer ready?
+    UCA0TXBUF = TXB0CTRLADDRESS; // Send 0xAA over SPI to Slave
+    P1OUT |= (BIT3); // Unselect Device
+    __delay_cycles(100);
+
+    P1OUT &= (~BIT3); // Select Device
+    while (!(IFG2 & UCA0TXIFG)); // USCI_A0 TX buffer ready?
+    UCA0TXBUF = READ_ADDRESS; // Send 0xAA over SPI to Slave
+    while (!(IFG2 & UCA0TXIFG)); // USCI_A0 TX buffer ready?
+    UCA0TXBUF = TXB0CTRL_ADDRESS; // Send 0xAA over SPI to Slave
+    while (!(IFG2 & UCA0TXIFG)); // USCI_A0 TX buffer ready?
+    UCA0TXBUF = trashbyte; // Send 0xAA over SPI to Slave
+    while (!(IFG2 & UCA0RXIFG)); // USCI_A0 RX Received?
+    received_ch = UCA0RXBUF; // Store received data
+    P1OUT |= (BIT3);
+    __delay_cycles(100);
+
+
 }
-//funciona
+
+
+}
 

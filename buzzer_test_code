@@ -9,20 +9,26 @@ volatile float temp_max, temp_min,temp_atual; //global variables
 
 
 void setup_buzzer(){
+    P1DIR |= BIT6; //Set pin 1.2 to the output direction.
+    P1SEL |= BIT6; //Select pin 1.2 as our PWM output.
 
-    P2DIR |= BIT2;// set P2.2 as output
-    P2OUT &= ~BIT2;// set P2.2 output as low
-    P2REN &= ~BIT2; // disable pullup and pulldown
 }
 
 void buzzer_checkup(){
     if(temp_atual> temp_max){
-        P2OUT |= BIT2;// set P2.2 output as hight
+        TA0CCR0 = 1000; //Set the period in the Timer A0 Capture/Compare 0 register to 1000 us.
+        TA0CCTL1 = OUTMOD_7;
+        TA0CCR1 = 500; //The period in microseconds that the power is ON. It's half the time, which translates to a 50% duty cycle.
+         TA0CTL = TASSEL_1 + MC_1; //TASSEL_2 selects SMCLK as the clock source, and MC_1 tells it to count up to the
     }
     if(temp_atual<temp_max){
-        P2OUT &= ~BIT2;// set P2.2 output as hight
+        TA0CTL = MC_0 ;// set P2.2 output as hight
     }
 }
+
+
+
+
 
 
 
@@ -47,24 +53,25 @@ void delay(){//testbench esperar tempo
 
 int main(void)
 {
-	WDTCTL = WDTPW | WDTHOLD;	// stop watchdog timer
-	setup_buzzer();
-	testbenchl();
+    WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
+    setup_buzzer();
+    testbenchl();
 
-	while(1){
-	    buzzer_checkup();
-	    delay();
-	    temp_atual = 40;
-	    buzzer_checkup();
-	    delay();
-	    temp_atual = 60;
-	    buzzer_checkup();
-	    delay();
-	    temp_atual = 80;
-	}
-
-
+    while(1){
+        //buzzer_checkup();
+       // delay();
+       // temp_atual = 40;
+       // buzzer_checkup();
+        //delay();
+       // temp_atual = 60;
+       // buzzer_checkup();
+        //delay();
+        //temp_atual = 80;
+    }
 
 
-	return 0;
+
+
+    return 0;
 }
+
